@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { FormBuilder } from "./FormBuilder.js";
@@ -30,6 +30,14 @@ describe("visual form builder", () => {
     expect(orderedFields[0]).toHaveTextContent("Work email");
     expect(screen.getByText("Moved Work email to position 1")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Move Work email up" })).toBeDisabled();
+  });
+
+  it("keeps keyboard focus with the field that was moved", async () => {
+    const user = userEvent.setup();
+    render(<FormBuilder />);
+    await user.click(screen.getByRole("button", { name: "Move Work email up" }));
+
+    await waitFor(() => expect(screen.getByRole("button", { name: "Edit Work email" })).toHaveFocus());
   });
 
   it("updates required state and switches the responsive preview", async () => {
