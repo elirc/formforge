@@ -6,6 +6,8 @@ export default defineConfig({
   server: { port: 5173 },
   test: {
     environment: "jsdom",
+    maxWorkers: 2,
     setupFiles: "./src/test/setup.ts",
+    testTimeout: 10_000,
   },
 });

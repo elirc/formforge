@@ -1,8 +1,10 @@
 import { demoForm, demoWorkspace, productCards, workspaceQueryKey, type Workspace } from "@formforge/core";
 import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { createRootRoute, createRoute, createRouter, Link, Outlet, RouterProvider } from "@tanstack/react-router";
+import { useCallback, useRef, useState } from "react";
 import { FormBuilder } from "./FormBuilder.js";
 import { FormRenderer } from "./FormRenderer.js";
+import { AutosaveStatus, useAutosave, type DraftSaver } from "./useAutosave.js";
 
 function HomePage() {
   return (
@@ -104,6 +106,22 @@ export async function loadWorkspace(workspaceId: string): Promise<Workspace | un
   return workspaceId === demoWorkspace.id ? demoWorkspace : undefined;
 }
 
+function WorkspaceBuilder({ workspaceId, initialSchema }: { workspaceId: string; initialSchema: typeof demoForm }) {
+  const [schema, setSchema] = useState(initialSchema);
+  const serverVersion = useRef(0);
+  const save = useCallback<DraftSaver>(async (_nextSchema, expectedVersion) => {
+    await Promise.resolve();
+    if (expectedVersion !== serverVersion.current) {
+      return { status: "conflict", serverVersion: serverVersion.current };
+    }
+    serverVersion.current += 1;
+    return { status: "saved", version: serverVersion.current };
+  }, [workspaceId]);
+  const autosave = useAutosave(schema, save);
+
+  return <><div className="workspace-savebar"><span>Draft / {initialSchema.title}</span><AutosaveStatus state={autosave} /></div><FormBuilder initialSchema={initialSchema} onSchemaChange={setSchema} /></>;
+}
+
 function WorkspacePage() {
   const { workspaceId, view } = workspaceRoute.useParams();
   const workspace = useQuery({ queryKey: workspaceQueryKey(workspaceId), queryFn: () => loadWorkspace(workspaceId) });
@@ -126,7 +144,7 @@ function WorkspacePage() {
       </header>
       <main id="workspace-main" className="workspace-main">
         <div className="route-heading"><div><p className="eyebrow">Workspace / {workspace.data.name}</p><h1>{view === "builder" ? workspace.data.forms[0]?.title ?? "New form" : view}</h1></div><Link to="/">Back to overview</Link></div>
-        {view === "builder" && workspace.data.forms[0] && <FormBuilder initialSchema={workspace.data.forms[0]} />}
+        {view === "builder" && workspace.data.forms[0] && <WorkspaceBuilder workspaceId={workspaceId} initialSchema={workspace.data.forms[0]} />}
         {view !== "builder" && <section className="empty-boundary"><p className="eyebrow">Intentional boundary</p><h2>No {view} yet</h2><p>This route owns its empty state before the feature arrives in a later sprint.</p></section>}
       </main>
     </div>
