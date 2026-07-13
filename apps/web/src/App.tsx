@@ -7,6 +7,7 @@ import { FormRenderer } from "./FormRenderer.js";
 import { MultiPageForm } from "./MultiPageForm.js";
 import { ResponseExplorer } from "./ResponseExplorer.js";
 import { AnalyticsDashboard } from "./AnalyticsDashboard.js";
+import { CollaborationPanel } from "./CollaborationPanel.js";
 import { AutosaveStatus, useAutosave, type DraftSaver } from "./useAutosave.js";
 
 function HomePage() {
@@ -122,7 +123,7 @@ function WorkspaceBuilder({ workspaceId, initialSchema }: { workspaceId: string;
   }, [workspaceId]);
   const autosave = useAutosave(schema, save);
 
-  return <><div className="workspace-savebar"><span>Draft / {initialSchema.title}</span><AutosaveStatus state={autosave} /></div><FormBuilder initialSchema={initialSchema} onSchemaChange={setSchema} rules={demoVisibilityRules} /><div className="flow-demo"><div><p className="eyebrow">Respondent journey</p><h2>Branching, resumable form</h2></div><MultiPageForm schema={initialSchema} flow={demoFormFlow} storageKey={`formforge:demo:${workspaceId}`} /></div></>;
+  return <><div className="workspace-savebar"><span>Draft / {initialSchema.title}</span><AutosaveStatus state={autosave} /></div><FormBuilder initialSchema={initialSchema} onSchemaChange={setSchema} rules={demoVisibilityRules} /><div className="flow-demo"><div><p className="eyebrow">Respondent journey</p><h2>Branching, resumable form</h2></div><MultiPageForm schema={initialSchema} flow={demoFormFlow} storageKey={`formforge:demo:${workspaceId}`} /></div><CollaborationPanel schema={schema} /></>;
 }
 
 function WorkspacePage() {
