@@ -1,5 +1,5 @@
 import { builderReducer, createField, initialBuilderState, type FieldKind, type FormSchema } from "@formforge/core";
-import { useReducer, useRef } from "react";
+import { useReducer, useRef, useState, type DragEvent } from "react";
 import { FormRenderer } from "./FormRenderer.js";
 
 const palette: readonly Readonly<{ kind: FieldKind; label: string; symbol: string }>[] = [
@@ -12,9 +12,48 @@ const palette: readonly Readonly<{ kind: FieldKind; label: string; symbol: strin
   { kind: "content", label: "Content", symbol: "¶" },
 ];
 
+type BuilderField = FormSchema["fields"][number];
+
+function FieldRow({ field, index, total, selected, onSelect, onMove, onDrop }: {
+  field: BuilderField;
+  index: number;
+  total: number;
+  selected: boolean;
+  onSelect: () => void;
+  onMove: (targetIndex: number) => void;
+  onDrop: (sourceId: string, targetIndex: number) => void;
+}) {
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  function beginDrag(event: DragEvent<HTMLLIElement>) {
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/formforge-field", field.id);
+  }
+  function receiveDrop(event: DragEvent<HTMLLIElement>) {
+    event.preventDefault();
+    const sourceId = event.dataTransfer.getData("text/formforge-field");
+    if (sourceId) onDrop(sourceId, index);
+  }
+
+  return (
+    <li className={selected ? "selected" : ""} draggable onDragStart={beginDrag} onDragOver={(event) => event.preventDefault()} onDrop={receiveDrop}>
+      <div className="field-row-main">
+        <span className="drag-grip" title="Drag to reorder" aria-hidden="true">⠿</span>
+        <button className="field-select" type="button" onClick={onSelect}><span>{String(index + 1).padStart(2, "0")}</span><strong>{field.label}</strong><small>{field.kind}</small></button>
+        <div className="move-actions" aria-label={`Reorder ${field.label}`}>
+          <button type="button" aria-label={`Move ${field.label} up`} disabled={index === 0} onClick={() => onMove(index - 1)}>↑</button>
+          <button type="button" aria-label={`Move ${field.label} down`} disabled={index === total - 1} onClick={() => onMove(index + 1)}>↓</button>
+        </div>
+      </div>
+      <button className="details-toggle" type="button" aria-expanded={detailsOpen} onClick={() => setDetailsOpen((open) => !open)}>{detailsOpen ? "Hide" : "Show"} details for {field.label}</button>
+      {detailsOpen && <p className="row-details">ID: {field.id}</p>}
+    </li>
+  );
+}
+
 export function FormBuilder({ initialSchema, onSchemaChange }: { initialSchema?: FormSchema; onSchemaChange?: (schema: FormSchema) => void }) {
   const [state, dispatch] = useReducer(builderReducer, initialSchema ? { schema: initialSchema, selectedFieldId: initialSchema.fields[0]?.id } : initialBuilderState);
   const sequence = useRef(state.schema.fields.length);
+  const [statusMessage, setStatusMessage] = useState("");
   const selected = state.schema.fields.find((field) => field.id === state.selectedFieldId);
 
   function send(action: Parameters<typeof builderReducer>[1]) {
@@ -26,6 +65,13 @@ export function FormBuilder({ initialSchema, onSchemaChange }: { initialSchema?:
   function nextId(kind: FieldKind) {
     sequence.current += 1;
     return `${kind}-${sequence.current}`;
+  }
+
+  function move(fieldId: string, targetIndex: number) {
+    const field = state.schema.fields.find((item) => item.id === fieldId);
+    if (!field) return;
+    send({ type: "field.move", fieldId, targetIndex });
+    setStatusMessage(`Moved ${field.label} to position ${targetIndex + 1}`);
   }
 
   return (
@@ -40,11 +86,10 @@ export function FormBuilder({ initialSchema, onSchemaChange }: { initialSchema?:
 
       <div className="builder-canvas">
         <div className="canvas-heading"><div><p className="eyebrow">Structure</p><h2>{state.schema.fields.length} fields</h2></div><span>Draft</span></div>
-        <ol className="field-list">
+        <p className="sr-only" aria-live="polite">{statusMessage}</p>
+        <ol className="field-list" aria-label="Form fields in order">
           {state.schema.fields.map((field, index) => (
-            <li key={field.id} className={field.id === state.selectedFieldId ? "selected" : ""}>
-              <button type="button" onClick={() => send({ type: "field.select", fieldId: field.id })}><span>{String(index + 1).padStart(2, "0")}</span><strong>{field.label}</strong><small>{field.kind}</small></button>
-            </li>
+            <FieldRow key={index} field={field} index={index} total={state.schema.fields.length} selected={field.id === state.selectedFieldId} onSelect={() => send({ type: "field.select", fieldId: field.id })} onMove={(targetIndex) => move(field.id, targetIndex)} onDrop={move} />
           ))}
         </ol>
       </div>
