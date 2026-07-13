@@ -1,76 +1,57 @@
 # FormForge
 
-FormForge is a schema-driven form builder and response analytics platform designed as a fifteen-sprint teaching repository for a junior software engineer.
+FormForge is a complete, schema-driven form builder and response analytics platform built as a fifteen-sprint React and TypeScript teaching repository. A junior engineer studies the issues, ordered commits, pull-request reviews, architecture decisions, counterexamples, and tests that produced the product.
 
-The product is intentionally frontend-heavy. A learner will build a visual editor, an accessible public form runtime, conditional rules, autosave, optimistic collaboration, response exploration, and analytics. Each feature creates a practical reason to learn React and TypeScript beyond syntax.
+Version `1.0.0` includes typed authoring, seven field variants, validation, conditional logic, multi-page branching and resume, immutable publishing, retry-safe submissions, response filtering and CSV export, analytics, comments, version diffs, accessibility checks, autosave recovery, and operational readiness boundaries.
 
-## Why this project
+## Run the release candidate
 
-A form builder is a compact product with unusually rich engineering problems:
+```bash
+pnpm install
+pnpm seed
+pnpm dev
+```
 
-- React component composition and reusable UI primitives;
-- controlled inputs, reducers, context, custom hooks, and derived state;
-- TypeScript discriminated unions, generics, narrowing, and exhaustive checks;
-- drag-and-drop plus an equivalent keyboard interaction model;
-- local state, server state, URL state, and persisted draft state;
-- validation, conditional logic, recursive data, and cycle detection;
-- optimistic updates, autosave conflicts, retries, and recovery;
-- accessible authoring and public submission experiences;
-- performance work on large schemas and response tables;
-- unit, component, integration, property, accessibility, and end-to-end tests.
+`pnpm seed` verifies the canonical demo scenario and prints a deterministic fingerprint. The development command starts the Vite application and Fastify API. No database, Docker daemon, or external service is required.
 
-The result should feel like a small Typeform or Google Forms rather than a collection of tutorial exercises.
+Run the complete local evidence gate with:
 
-## Product brief
+```bash
+pnpm gate
+```
 
-Form authors can create workspaces, build forms from typed field blocks, preview and publish versions, add validation and conditional rules, and review submissions. Respondents receive an accessible, mobile-friendly experience that can save progress safely. Teams can comment on drafts and inspect version history.
+## Architecture
 
-The first release will support text, email, number, choice, checkbox, date, and content blocks. Payments, arbitrary code execution, external automation, and true multi-user cursor editing are intentionally out of scope.
+```mermaid
+flowchart LR
+  Browser[React 19 + Vite] --> Core[@formforge/core\ntyped domain rules]
+  Browser --> API[Fastify API\nruntime boundaries]
+  API --> Core
+  API --> Data[@formforge/data\nrepository contracts + in-memory adapters]
+  Data --> Core
+  CI[GitHub Actions] --> Checks[lint + typecheck + tests + build\nsecret scan + bundle budget]
+```
 
-## Proposed stack
+The browser owns interaction and presentation state. `@formforge/core` owns pure schemas, reducers, validation, branching, response queries, analytics, and diffs. The API validates untrusted HTTP data and authorization context. `@formforge/data` demonstrates versioned repository contracts with deterministic in-memory adapters; durable deployment storage remains an explicit production integration, not a claim made by this repository.
 
-- React and strict TypeScript for the authoring and response applications;
-- Vite for local development and production builds;
-- TanStack Router and TanStack Query for URL and server state;
-- Zod at untrusted runtime boundaries;
-- dnd-kit with a first-class keyboard reordering path;
-- Fastify and a repository boundary for the TypeScript API;
-- Prisma with PostgreSQL as the production data model and deterministic in-memory adapters for teaching;
-- Vitest, React Testing Library, fast-check, axe, and Playwright for layered evidence;
-- pnpm workspaces and GitHub Actions for repeatable quality gates.
+## Implemented stack
 
-Exact dependency versions will be pinned during Sprint 1 after checking current stable releases.
+- React 19, strict TypeScript, Vite, TanStack Router, and TanStack Query;
+- Fastify with Zod-backed domain parsing at HTTP boundaries;
+- pnpm workspaces and Turborepo;
+- Vitest, React Testing Library, fast-check, jsdom, and axe-core;
+- GitHub Actions quality, dependency-audit, secret-scan, and bundle-size gates.
 
-## Fifteen-sprint path
+Dependencies are pinned exactly. The project deliberately uses visible reorder controls with an equivalent keyboard path instead of hiding behavior behind a drag library. It does not claim a production database, authentication provider, rate limiter, or real monitoring system.
 
-| Sprint | Product outcome | React and TypeScript emphasis |
-| --- | --- | --- |
-| 01 | Foundations and app shell | strict configuration, component boundaries, semantic layout |
-| 02 | Typed schema and form renderer | discriminated unions, exhaustive rendering, recursive composition |
-| 03 | Visual builder basics | reducers, immutable updates, controlled inputs, derived state |
-| 04 | Reordering and field library | stable identity, drag-and-drop, keyboard interaction, focus |
-| 05 | Validation, preview, and first demo | error modeling, form events, error boundaries; `v0.5.0` |
-| 06 | Workspaces, routing, and loading states | nested routes, URL state, query boundaries, Suspense decisions |
-| 07 | Draft persistence and autosave | custom hooks, debouncing, stale closures, version conflicts |
-| 08 | Conditional logic | recursive rules, narrowing, cycle detection, property tests |
-| 09 | Multi-page forms and branching | state machines, progress derivation, resumable sessions |
-| 10 | Publishing and public submissions | immutable versions, runtime validation, trust boundaries |
-| 11 | Response explorer | typed filters, pagination, virtualization, table accessibility |
-| 12 | Analytics dashboard | typed aggregation, chart semantics, memoization evidence |
-| 13 | Comments and version history | optimistic mutations, rollback, cache invalidation, audit trails |
-| 14 | Accessibility, performance, and resilience | profiling, code splitting, offline/error recovery, axe and E2E |
-| 15 | Production readiness and retrospective | observability, threat model, runbooks, demo, evidence audit; `v1.0.0` |
+## Study the repository
 
-Read the detailed [15-sprint plan](docs/15-SPRINT-PLAN.md) and [learning outcomes](docs/LEARNING-OUTCOMES.md) before beginning Sprint 1.
+Start with the [fifteen-sprint plan](docs/15-SPRINT-PLAN.md), then study each merged pull request in order: stakeholder issues, commits, inline review discussion, design debate, tests, ADR, and concept note. The [course retrospective](docs/COURSE-RETROSPECTIVE.md) summarizes what each sprint should teach, and the [revealed flaw ledger](docs/sprints/flaw-ledger.md) connects five realistic defects to their failing counterexamples and repairs.
 
-## Teaching process
+Testing has its own junior-focused guides: [why tests were added](TESTREADME.md) and the [layered testing strategy](TESTING.md). [CONTRIBUTING.md](CONTRIBUTING.md) records the repeatable sprint workflow.
 
-Every sprint should have one GitHub milestone, four stakeholder-shaped issues, and one sequential pull request. The pull request includes ordered commits, focused tests, an ADR, a concept note, inline teaching comments, an author/reviewer exchange, and one genuine design debate. CI must be green before merge.
+## Release boundaries
 
-The course uses evidence rather than ceremony: tests must explain risk, performance claims need measurements, accessibility claims need keyboard and automated evidence, and security claims must name the protected boundary.
+The v1 release demonstrates product behavior, strict compilation, deterministic test and seed evidence, accessibility automation, responsive browser journeys, bundle budgets, repository contracts, and operational documentation. Encryption, durable backups, retention enforcement, authentication, rate limiting, alert routing, and service-level objectives require a chosen deployment environment and are tracked honestly in the [threat model](docs/security/threat-model.md) and [runbooks](docs/runbooks/deploy.md).
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the sprint workflow and definition of done.
-
-## Current status
-
-The curriculum foundation and fifteen milestones are ready. Product implementation begins in Sprint 1.
+Payments, arbitrary code execution, outbound automation, and live multi-user cursors are out of scope.
