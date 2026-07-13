@@ -1,4 +1,5 @@
-import { productCards } from "@formforge/core";
+import { demoForm, productCards } from "@formforge/core";
+import { FormRenderer } from "./FormRenderer.js";
 
 export function App() {
   return (
@@ -49,6 +50,19 @@ export function App() {
               </article>
             ))}
           </div>
+        </section>
+
+        <section className="renderer-stage" aria-labelledby="renderer-heading">
+          <div className="renderer-copy">
+            <p className="eyebrow">Typed by design</p>
+            <h2 id="renderer-heading">One schema. Every control accounted for.</h2>
+            <p>The field discriminant connects authoring data to an exhaustive React renderer. Invalid variants stop at the runtime boundary.</p>
+            <dl>
+              <div><dt>7</dt><dd>field variants</dd></div>
+              <div><dt>1</dt><dd>exhaustive contract</dd></div>
+            </dl>
+          </div>
+          <FormRenderer schema={demoForm} />
         </section>
 
         <section className="boundary-grid" aria-label="Workspace status">
