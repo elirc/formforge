@@ -20,3 +20,4 @@ export { demoWorkspace, workspaceQueryKey, type Workspace } from "./workspace.js
 export { demoVisibilityRules, evaluateRule, isFieldVisible, validateVisibilityRules, type ComparisonRule, type ConditionRule, type RuleIssue, type VisibilityRule } from "./rules.js";
 export { answerSession, backSession, demoFormFlow, nextSession, resumeSession, serializeSession, startSession, type FormFlow, type FormPage, type PageBranch, type ResponseSession } from "./flow.js";
 export { demoResponses, escapeCsvCell, exportResponsesCsv, queryResponses, type ResponsePage, type ResponseQuery, type ResponseRecord } from "./responses.js";
+export { buildAnalyticsReport, choiceBreakdown, demoJourneys, type AnalyticsReport, type ChoiceMetric, type PageDropoff, type ResponseJourney } from "./analytics.js";
