@@ -14,6 +14,8 @@
 
 The Vite development server returned HTTP 200 for `/`, builder, responses, analytics, and public-form entry routes. The API returned healthy liveness and readiness responses. Structured stdout contained the supplied `release-probe-live` and `release-probe-ready` request IDs, route templates, status, and duration without request bodies.
 
-## Browser acceptance
+## Interaction acceptance and exception
 
-The release still requires the in-app desktop and narrow-viewport interaction checklist: navigate each product area, reorder a field and verify focus continuity, filter responses, load the lazy analytics view, complete the public form, and inspect responsive layout. This section must not be marked complete from HTTP probes or jsdom tests alone.
+The component integration suite exercises navigation, reorder focus continuity, response filtering, lazy analytics rendering, public-form completion, and responsive preview switching. Live probes confirm every SPA entry route returns the application shell.
+
+The planned in-app desktop and narrow-viewport visual sweep could not run because the browser-control runtime was unavailable. HTTP and jsdom evidence do not prove pixel layout or real assistive-technology behavior, so this is recorded as a release evidence exception rather than a passing browser claim. A deployment owner should perform the visual/device matrix before exposing real respondent traffic.

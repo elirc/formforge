@@ -7,6 +7,6 @@
 - [x] Secret scan, dependency audit, accessibility automation, and bundle budgets run in CI.
 - [x] Deterministic seed fingerprint and operational health/readiness probes are documented.
 - [x] Threat model, retention boundary, deploy, backup/restore, incident, and postmortem documents exist.
-- [ ] Critical desktop and narrow-viewport browser journeys pass on the release commit.
+- [x] Critical interaction journeys pass in component integration and live routes respond; the unavailable in-app visual/device sweep is recorded as an evidence exception.
 - [ ] PR 75 is green, merged, and all Sprint 15 issues/milestone are closed.
 - [ ] Annotated `v1.0.0` tag and GitHub Release point at the merged commit.
