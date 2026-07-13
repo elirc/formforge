@@ -1,0 +1,15 @@
+{
+  "name": "@formforge/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts",
+    "dev": "tsx watch src/index.ts",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": { "fastify": "5.10.0" },
+  "devDependencies": { "tsup": "8.5.1", "tsx": "4.23.1", "typescript": "5.9.3", "vitest": "4.1.10" }
+}
