@@ -1,6 +1,17 @@
 import { parseFormSchema, validateResponse, validateSchema, type AnswerValue, type FormSchema } from "@formforge/core";
 import { InMemoryDraftRepository, InMemoryPublicationRepository, InMemorySubmissionRepository, type DraftRepository, type PublicationRepository, type SubmissionRepository } from "@formforge/data";
 import Fastify from "fastify";
+import { randomUUID } from "node:crypto";
+import type { OperationalEventSink } from "./operational-events.js";
+
+export interface ApiOptions {
+  readonly drafts?: DraftRepository;
+  readonly publications?: PublicationRepository;
+  readonly submissions?: SubmissionRepository;
+  readonly readiness?: () => boolean | Promise<boolean>;
+  readonly events?: OperationalEventSink;
+  readonly now?: () => Date;
+}
 
 function parseAnswers(input: unknown): Readonly<Record<string, AnswerValue | undefined>> | undefined {
   if (!input || typeof input !== "object" || Array.isArray(input)) return undefined;
@@ -8,12 +19,44 @@ function parseAnswers(input: unknown): Readonly<Record<string, AnswerValue | und
   return input as Readonly<Record<string, AnswerValue | undefined>>;
 }
 
-export function buildApi(options: { drafts?: DraftRepository; publications?: PublicationRepository; submissions?: SubmissionRepository } = {}) {
-  const app = Fastify({ logger: false });
+export function buildApi(options: ApiOptions = {}) {
+  const app = Fastify({
+    logger: false,
+    genReqId: (request) => {
+      const candidate = request.headers["x-request-id"];
+      return typeof candidate === "string" && /^[a-zA-Z0-9._:-]{1,100}$/.test(candidate) ? candidate : randomUUID();
+    },
+  });
   const drafts = options.drafts ?? new InMemoryDraftRepository();
   const publications = options.publications ?? new InMemoryPublicationRepository();
   const submissions = options.submissions ?? new InMemorySubmissionRepository();
+  const readiness = options.readiness ?? (() => true);
+  const now = options.now ?? (() => new Date());
+
+  app.addHook("onResponse", async (request, reply) => {
+    options.events?.({
+      timestamp: now().toISOString(),
+      level: reply.statusCode >= 500 ? "error" : reply.statusCode >= 400 ? "warn" : "info",
+      event: "http.request.completed",
+      requestId: request.id,
+      method: request.method,
+      route: request.routeOptions.url ?? "unmatched",
+      statusCode: reply.statusCode,
+      durationMs: Math.round(reply.elapsedTime),
+    });
+  });
+
   app.get("/health", async () => ({ status: "ok", service: "formforge-api" }));
+  app.get("/health/ready", async (_request, reply) => {
+    try {
+      const ready = await readiness();
+      return ready
+        ? { status: "ready", service: "formforge-api", checks: { dependencies: "ok" } }
+        : reply.code(503).send({ status: "not_ready", service: "formforge-api", checks: { dependencies: "failed" } });
+    } catch {
+      return reply.code(503).send({ status: "not_ready", service: "formforge-api", checks: { dependencies: "failed" } });
+    }
+  });
   app.get<{ Params: { workspaceId: string; formId: string } }>("/workspaces/:workspaceId/forms/:formId/draft", async (request, reply) => {
     const draft = await drafts.find(request.params.workspaceId, request.params.formId);
     return draft ?? reply.code(404).send({ code: "draft_not_found" });
