@@ -14,3 +14,4 @@ export const productCards: readonly ProductCard[] = [
 ];
 
 export { demoForm, parseFormSchema, type Field, type FieldKind, type FormSchema } from "./schema.js";
+export { builderReducer, createField, initialBuilderState, type BuilderAction, type BuilderState } from "./builder.js";
