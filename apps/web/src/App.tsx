@@ -1,20 +1,22 @@
-import { demoForm, productCards } from "@formforge/core";
+import { demoForm, demoWorkspace, productCards, workspaceQueryKey, type Workspace } from "@formforge/core";
+import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
+import { createRootRoute, createRoute, createRouter, Link, Outlet, RouterProvider } from "@tanstack/react-router";
 import { FormBuilder } from "./FormBuilder.js";
 import { FormRenderer } from "./FormRenderer.js";
 
-export function App() {
+function HomePage() {
   return (
     <div className="app-shell">
       <a className="skip-link" href="#main">Skip to content</a>
       <header className="topbar">
-        <a className="brand" href="/" aria-label="FormForge home">
+        <Link className="brand" to="/" aria-label="FormForge home">
           <span className="brand-mark" aria-hidden="true">F</span>
           <span>FormForge</span>
-        </a>
+        </Link>
         <nav aria-label="Primary navigation">
-          <a aria-current="page" href="#forms">Forms</a>
-          <a href="#responses">Responses</a>
-          <a href="#analytics">Analytics</a>
+          <Link to="/workspaces/$workspaceId/$view" params={{ workspaceId: "acme", view: "builder" }}>Forms</Link>
+          <Link to="/workspaces/$workspaceId/$view" params={{ workspaceId: "acme", view: "responses" }}>Responses</Link>
+          <Link to="/workspaces/$workspaceId/$view" params={{ workspaceId: "acme", view: "analytics" }}>Analytics</Link>
         </nav>
         <button className="avatar" type="button" aria-label="Open account menu">AE</button>
       </header>
@@ -26,7 +28,7 @@ export function App() {
             <h1 id="page-title">Build forms people enjoy answering.</h1>
             <p className="hero-copy">Create a typed, accessible experience. Publish with confidence and learn from every response.</p>
           </div>
-          <button className="primary-action" type="button">Create a form <span aria-hidden="true">→</span></button>
+          <Link className="primary-action" to="/workspaces/$workspaceId/$view" params={{ workspaceId: "acme", view: "builder" }}>Create a form <span aria-hidden="true">→</span></Link>
         </section>
 
         <section id="forms" className="section" aria-labelledby="workspace-heading">
@@ -47,7 +49,7 @@ export function App() {
                   <h3>{card.title}</h3>
                   <p>{card.description}</p>
                 </div>
-                <a href={`#${card.area}`} aria-label={`Open ${card.title}`}>Explore <span aria-hidden="true">↗</span></a>
+                <Link to="/workspaces/$workspaceId/$view" params={{ workspaceId: "acme", view: card.area }} aria-label={`Open ${card.title}`}>Explore <span aria-hidden="true">↗</span></Link>
               </article>
             ))}
           </div>
@@ -94,4 +96,55 @@ export function App() {
       </footer>
     </div>
   );
+}
+
+export async function loadWorkspace(workspaceId: string): Promise<Workspace | undefined> {
+  await Promise.resolve();
+  if (workspaceId === "error") throw new Error("Workspace service unavailable");
+  return workspaceId === demoWorkspace.id ? demoWorkspace : undefined;
+}
+
+function WorkspacePage() {
+  const { workspaceId, view } = workspaceRoute.useParams();
+  const workspace = useQuery({ queryKey: workspaceQueryKey(workspaceId), queryFn: () => loadWorkspace(workspaceId) });
+  if (workspace.isPending) return <main className="route-boundary" aria-busy="true"><p className="eyebrow">Loading workspace</p><h1>Opening the studio…</h1></main>;
+  if (workspace.isError) return <main className="route-boundary"><p className="eyebrow">Unable to load</p><h1>Workspace temporarily unavailable</h1><p>Try again after checking the API boundary.</p></main>;
+  if (!workspace.data) return <main className="route-boundary"><p className="eyebrow">Not found</p><h1>That workspace does not exist</h1><Link to="/">Return home</Link></main>;
+
+  const knownView = view === "builder" || view === "responses" || view === "analytics";
+  if (!knownView) return <main className="route-boundary"><p className="eyebrow">Not found</p><h1>That workspace view does not exist</h1></main>;
+
+  return (
+    <div className="workspace-shell">
+      <a className="skip-link" href="#workspace-main">Skip to content</a>
+      <header className="workspace-topbar">
+        <Link className="brand" to="/"><span className="brand-mark" aria-hidden="true">F</span><span>FormForge</span></Link>
+        <div><strong>{workspace.data.name}</strong><small>{workspace.data.plan} plan</small></div>
+        <nav aria-label="Workspace navigation">
+          {(["builder", "responses", "analytics"] as const).map((item) => <Link key={item} to="/workspaces/$workspaceId/$view" params={{ workspaceId, view: item }} activeProps={{ "aria-current": "page" }}>{item === "builder" ? "Builder" : item[0]?.toUpperCase() + item.slice(1)}</Link>)}
+        </nav>
+      </header>
+      <main id="workspace-main" className="workspace-main">
+        <div className="route-heading"><div><p className="eyebrow">Workspace / {workspace.data.name}</p><h1>{view === "builder" ? workspace.data.forms[0]?.title ?? "New form" : view}</h1></div><Link to="/">Back to overview</Link></div>
+        {view === "builder" && workspace.data.forms[0] && <FormBuilder initialSchema={workspace.data.forms[0]} />}
+        {view !== "builder" && <section className="empty-boundary"><p className="eyebrow">Intentional boundary</p><h2>No {view} yet</h2><p>This route owns its empty state before the feature arrives in a later sprint.</p></section>}
+      </main>
+    </div>
+  );
+}
+
+const rootRoute = createRootRoute({ component: () => <Outlet /> });
+const homeRoute = createRoute({ getParentRoute: () => rootRoute, path: "/", component: HomePage });
+const workspaceRoute = createRoute({ getParentRoute: () => rootRoute, path: "/workspaces/$workspaceId/$view", component: WorkspacePage });
+const routeTree = rootRoute.addChildren([homeRoute, workspaceRoute]);
+export const appRouter = createRouter({ routeTree });
+
+declare module "@tanstack/react-router" {
+  interface Register { router: typeof appRouter }
+}
+
+const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: 30_000 } } });
+
+export function App() {
+  return <QueryClientProvider client={queryClient}><RouterProvider router={appRouter} /></QueryClientProvider>;
 }
