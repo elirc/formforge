@@ -105,7 +105,7 @@ export function FormBuilder({ initialSchema, onSchemaChange, rules = [] }: { ini
         <p className="sr-only" aria-live="polite">{statusMessage}</p>
         <ol className="field-list" aria-label="Form fields in order">
           {state.schema.fields.map((field, index) => (
-            <FieldRow key={index} field={field} index={index} total={state.schema.fields.length} selected={field.id === state.selectedFieldId} onSelect={() => send({ type: "field.select", fieldId: field.id })} onMove={(targetIndex) => move(field.id, targetIndex)} onDrop={move} />
+            <FieldRow key={field.id} field={field} index={index} total={state.schema.fields.length} selected={field.id === state.selectedFieldId} onSelect={() => send({ type: "field.select", fieldId: field.id })} onMove={(targetIndex) => move(field.id, targetIndex)} onDrop={move} />
           ))}
         </ol>
       </div>
