@@ -1,4 +1,4 @@
-import { validateResponse, type AnswerValue, type Field, type FormSchema, type ResponseErrors } from "@formforge/core";
+import { isFieldVisible, validateResponse, type AnswerValue, type Field, type FormSchema, type ResponseErrors, type VisibilityRule } from "@formforge/core";
 import { useState, type FormEvent, type ReactNode } from "react";
 
 function unreachable(value: never): never {
@@ -25,9 +25,17 @@ function control(field: Field, error: string | undefined): ReactNode {
   }
 }
 
-export function FormRenderer({ schema }: { schema: FormSchema }) {
+export function FormRenderer({ schema, rules = [] }: { schema: FormSchema; rules?: readonly VisibilityRule[] }) {
   const [errors, setErrors] = useState<ResponseErrors>({});
   const [submitted, setSubmitted] = useState(false);
+  const [answers, setAnswers] = useState<Readonly<Record<string, AnswerValue | undefined>>>({});
+  const visibleFields = schema.fields.filter((field) => isFieldVisible(field.id, rules, answers));
+
+  function change(event: FormEvent<HTMLFormElement>) {
+    const target = event.target as HTMLInputElement | HTMLSelectElement;
+    if (!target.name) return;
+    setAnswers((current) => ({ ...current, [target.name]: target.type === "checkbox" ? (target as HTMLInputElement).checked : target.value }));
+  }
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -37,21 +45,22 @@ export function FormRenderer({ schema }: { schema: FormSchema }) {
       if (field.kind === "content") continue;
       answers[field.id] = field.kind === "checkbox" ? data.has(field.id) : String(data.get(field.id) ?? "");
     }
-    const nextErrors = validateResponse(schema, answers);
+    const visibleSchema = { ...schema, fields: visibleFields };
+    const nextErrors = validateResponse(visibleSchema, answers);
     setErrors(nextErrors);
     setSubmitted(Object.keys(nextErrors).length === 0);
   }
 
   return (
-    <form className="form-preview" aria-labelledby={`${schema.id}-title`} onSubmit={submit} noValidate>
+    <form className="form-preview" aria-labelledby={`${schema.id}-title`} onChange={change} onSubmit={submit} noValidate>
       <div className="preview-header">
         <p className="eyebrow">Live preview</p>
         <h2 id={`${schema.id}-title`}>{schema.title}</h2>
         <p>{schema.description}</p>
       </div>
-      {Object.keys(errors).length > 0 && <div className="error-summary" role="alert"><h3>Check your response</h3><ul>{schema.fields.flatMap((field) => errors[field.id] ? [<li key={field.id}><a href={`#${field.id}`}>{field.label}: {errors[field.id]}</a></li>] : [])}</ul></div>}
+      {Object.keys(errors).length > 0 && <div className="error-summary" role="alert"><h3>Check your response</h3><ul>{visibleFields.flatMap((field) => errors[field.id] ? [<li key={field.id}><a href={`#${field.id}`}>{field.label}: {errors[field.id]}</a></li>] : [])}</ul></div>}
       <div className="field-stack">
-        {schema.fields.map((field) => field.kind === "content" ? <section key={field.id}>{control(field, undefined)}</section> : (
+        {visibleFields.map((field) => field.kind === "content" ? <section key={field.id}>{control(field, undefined)}</section> : (
           <div className="field-control" key={field.id}>
             {field.kind !== "checkbox" && <label htmlFor={field.id}>{field.label}{field.required && <span aria-hidden="true"> *</span>}</label>}
             {hint(field)}

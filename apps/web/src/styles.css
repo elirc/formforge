@@ -87,6 +87,7 @@ nav a[aria-current="page"] { color: var(--ink); font-weight: 700; }
 .settings-actions .danger { color: #9d2e27; }
 .builder-preview { grid-column: 1 / -1; padding: 2rem; border-top: 1px solid var(--line); background: #dfe2d9; }
 .preview-toolbar { max-width: 920px; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: space-between; }
+.logic-badge { background: var(--lime); border: 1px solid #b9d254; border-radius: 999px; color: #24301d; font-size: 0.7rem; margin-left: auto; margin-right: 0.75rem; padding: 0.25rem 0.55rem; }
 .preview-toolbar div { display: flex; }
 .preview-toolbar button { padding: .5rem .75rem; border: 1px solid #aaa69d; background: #f8f6f1; cursor: pointer; }
 .preview-toolbar button[aria-pressed="true"] { background: var(--ink); color: white; }

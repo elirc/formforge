@@ -1,4 +1,4 @@
-import { demoForm, demoWorkspace, productCards, workspaceQueryKey, type Workspace } from "@formforge/core";
+import { demoForm, demoVisibilityRules, demoWorkspace, productCards, workspaceQueryKey, type Workspace } from "@formforge/core";
 import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { createRootRoute, createRoute, createRouter, Link, Outlet, RouterProvider } from "@tanstack/react-router";
 import { useCallback, useRef, useState } from "react";
@@ -119,7 +119,7 @@ function WorkspaceBuilder({ workspaceId, initialSchema }: { workspaceId: string;
   }, [workspaceId]);
   const autosave = useAutosave(schema, save);
 
-  return <><div className="workspace-savebar"><span>Draft / {initialSchema.title}</span><AutosaveStatus state={autosave} /></div><FormBuilder initialSchema={initialSchema} onSchemaChange={setSchema} /></>;
+  return <><div className="workspace-savebar"><span>Draft / {initialSchema.title}</span><AutosaveStatus state={autosave} /></div><FormBuilder initialSchema={initialSchema} onSchemaChange={setSchema} rules={demoVisibilityRules} /></>;
 }
 
 function WorkspacePage() {
