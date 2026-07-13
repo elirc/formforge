@@ -11,5 +11,7 @@ describe("application shell", () => {
     expect(screen.getByRole("heading", { name: /build forms people enjoy answering/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /create a form/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /skip to content/i })).toHaveAttribute("href", "#main");
+    expect(screen.getAllByText("ready")).toHaveLength(3);
+    expect(screen.getByRole("heading", { name: /fifteen evidence-backed sprints/i })).toBeInTheDocument();
   });
 });

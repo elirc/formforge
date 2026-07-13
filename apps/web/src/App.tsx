@@ -89,9 +89,9 @@ function HomePage() {
 
         <section className="boundary-grid" aria-label="Workspace status">
           <article>
-            <p className="eyebrow">Next lesson</p>
-            <h2>Typed schema renderer</h2>
-            <p>Model field variants so the compiler keeps every renderer honest.</p>
+            <p className="eyebrow">Course complete</p>
+            <h2>Fifteen evidence-backed sprints</h2>
+            <p>Trace each product capability from stakeholder issue through implementation, review, and test evidence.</p>
           </article>
           <article className="dark-card">
             <p className="eyebrow">Learning signal</p>

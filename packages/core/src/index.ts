@@ -9,8 +9,8 @@ export type ProductCard = Readonly<{
 
 export const productCards: readonly ProductCard[] = [
   { area: "builder", title: "Form builder", description: "Compose typed fields and preview the respondent experience.", status: "ready" },
-  { area: "responses", title: "Responses", description: "Inspect, filter, and export submissions.", status: "planned" },
-  { area: "analytics", title: "Analytics", description: "Understand completion and drop-off with honest metrics.", status: "planned" },
+  { area: "responses", title: "Responses", description: "Inspect, filter, and export submissions.", status: "ready" },
+  { area: "analytics", title: "Analytics", description: "Understand completion and drop-off with honest metrics.", status: "ready" },
 ];
 
 export { demoForm, parseFormSchema, type Field, type FieldKind, type FormSchema } from "./schema.js";
