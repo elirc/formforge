@@ -1,4 +1,4 @@
-import { demoForm, demoFormFlow, demoResponses, demoVisibilityRules, demoWorkspace, productCards, workspaceQueryKey, type Workspace } from "@formforge/core";
+import { demoForm, demoFormFlow, demoJourneys, demoResponses, demoVisibilityRules, demoWorkspace, productCards, workspaceQueryKey, type Workspace } from "@formforge/core";
 import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { createRootRoute, createRoute, createRouter, Link, Outlet, RouterProvider } from "@tanstack/react-router";
 import { useCallback, useRef, useState } from "react";
@@ -6,6 +6,7 @@ import { FormBuilder } from "./FormBuilder.js";
 import { FormRenderer } from "./FormRenderer.js";
 import { MultiPageForm } from "./MultiPageForm.js";
 import { ResponseExplorer } from "./ResponseExplorer.js";
+import { AnalyticsDashboard } from "./AnalyticsDashboard.js";
 import { AutosaveStatus, useAutosave, type DraftSaver } from "./useAutosave.js";
 
 function HomePage() {
@@ -148,7 +149,7 @@ function WorkspacePage() {
         <div className="route-heading"><div><p className="eyebrow">Workspace / {workspace.data.name}</p><h1>{view === "builder" ? workspace.data.forms[0]?.title ?? "New form" : view}</h1></div><Link to="/">Back to overview</Link></div>
         {view === "builder" && workspace.data.forms[0] && <WorkspaceBuilder workspaceId={workspaceId} initialSchema={workspace.data.forms[0]} />}
         {view === "responses" && <ResponseExplorer responses={demoResponses} />}
-        {view === "analytics" && <section className="empty-boundary"><p className="eyebrow">Intentional boundary</p><h2>No analytics yet</h2><p>This route owns its empty state before the feature arrives in a later sprint.</p></section>}
+        {view === "analytics" && <AnalyticsDashboard journeys={demoJourneys} responses={demoResponses} pages={demoFormFlow.pages} />}
       </main>
     </div>
   );
