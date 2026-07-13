@@ -152,10 +152,18 @@ function WorkspacePage() {
   );
 }
 
+function PublicFormPage() {
+  const { slug } = publicRoute.useParams();
+  const [receipt, setReceipt] = useState<string>();
+  if (slug !== demoForm.id) return <main className="route-boundary"><p className="eyebrow">Public form</p><h1>That form is not published</h1><Link to="/">Return home</Link></main>;
+  return <main className="public-form-shell"><Link className="brand" to="/"><span className="brand-mark" aria-hidden="true">F</span><span>FormForge</span></Link><p className="public-version">Published snapshot v1</p><FormRenderer schema={demoForm} onValidSubmit={() => setReceipt("demo-receipt-001")} />{receipt && <div className="submission-receipt" role="status"><strong>Response received</strong><span>Receipt {receipt}</span></div>}</main>;
+}
+
 const rootRoute = createRootRoute({ component: () => <Outlet /> });
 const homeRoute = createRoute({ getParentRoute: () => rootRoute, path: "/", component: HomePage });
 const workspaceRoute = createRoute({ getParentRoute: () => rootRoute, path: "/workspaces/$workspaceId/$view", component: WorkspacePage });
-const routeTree = rootRoute.addChildren([homeRoute, workspaceRoute]);
+const publicRoute = createRoute({ getParentRoute: () => rootRoute, path: "/f/$slug", component: PublicFormPage });
+const routeTree = rootRoute.addChildren([homeRoute, workspaceRoute, publicRoute]);
 export const appRouter = createRouter({ routeTree });
 
 declare module "@tanstack/react-router" {
