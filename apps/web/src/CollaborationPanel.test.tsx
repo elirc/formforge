@@ -23,4 +23,17 @@ describe("comments and version history", () => {
     expect(screen.getByText(/Renamed form from/)).toBeInTheDocument();
     expect(screen.getByText("Added Research consent.")).toBeInTheDocument();
   });
+
+  it("rolls back a rejected optimistic comment while preserving retry text", async () => {
+    const user = userEvent.setup();
+    const create = vi.fn<CreateComment>().mockRejectedValue(new Error("offline"));
+    render(<CommentsPanel initialComments={[]} createComment={create} />);
+    const textbox = screen.getByRole("textbox", { name: "Add a comment" });
+    await user.type(textbox, "Keep this draft for retry");
+    await user.click(screen.getByRole("button", { name: "Comment" }));
+
+    expect(await screen.findByText("Comment failed to send. Try again.")).toBeInTheDocument();
+    expect(screen.queryByRole("listitem")).not.toBeInTheDocument();
+    expect(textbox).toHaveValue("Keep this draft for retry");
+  });
 });
