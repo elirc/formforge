@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { FormBuilder } from "./FormBuilder.js";
@@ -38,6 +38,17 @@ describe("visual form builder", () => {
     await user.click(screen.getByRole("button", { name: "Move Work email up" }));
 
     await waitFor(() => expect(screen.getByRole("button", { name: "Edit Work email" })).toHaveFocus());
+  });
+
+  it("keeps row-local disclosure state attached to field identity", async () => {
+    const user = userEvent.setup();
+    render(<FormBuilder />);
+    await user.click(screen.getByRole("button", { name: "Show details for Work email" }));
+    await user.click(screen.getByRole("button", { name: "Move Work email up" }));
+
+    const workEmailRow = screen.getByRole("button", { name: "Edit Work email" }).closest("li");
+    expect(workEmailRow).not.toBeNull();
+    expect(within(workEmailRow!).getByText("ID: email")).toBeInTheDocument();
   });
 
   it("updates required state and switches the responsive preview", async () => {
