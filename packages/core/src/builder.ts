@@ -5,6 +5,7 @@ export type BuilderAction =
   | Readonly<{ type: "field.add"; field: Field }>
   | Readonly<{ type: "field.select"; fieldId: string }>
   | Readonly<{ type: "field.update"; fieldId: string; patch: Readonly<{ label?: string; description?: string }> }>
+  | Readonly<{ type: "field.require"; fieldId: string; required: boolean }>
   | Readonly<{ type: "field.move"; fieldId: string; targetIndex: number }>
   | Readonly<{ type: "field.duplicate"; fieldId: string; newId: string }>
   | Readonly<{ type: "field.remove"; fieldId: string }>;
@@ -29,6 +30,7 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
     case "field.add": return { ...state, schema: { ...state.schema, fields: [...state.schema.fields, action.field] }, selectedFieldId: action.field.id };
     case "field.select": return state.schema.fields.some((field) => field.id === action.fieldId) ? { ...state, selectedFieldId: action.fieldId } : state;
     case "field.update": return { ...state, schema: { ...state.schema, fields: state.schema.fields.map((field) => field.id === action.fieldId ? { ...field, ...action.patch } : field) } };
+    case "field.require": return { ...state, schema: { ...state.schema, fields: state.schema.fields.map((field) => field.id === action.fieldId && field.kind !== "content" ? { ...field, required: action.required } : field) } };
     case "field.move": {
       const sourceIndex = state.schema.fields.findIndex((field) => field.id === action.fieldId);
       if (sourceIndex < 0) return state;
