@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { demoForm } from "@formforge/core";
 import { buildApi } from "./app.js";
+import { serializeOperationalEvent, type OperationalEvent } from "./operational-events.js";
 
 describe("API health", () => {
   it("exposes a deterministic readiness boundary", async () => {
@@ -8,6 +9,43 @@ describe("API health", () => {
     const response = await app.inject({ method: "GET", url: "/health" });
     expect(response.statusCode).toBe(200);
     expect(response.json()).toEqual({ status: "ok", service: "formforge-api" });
+    await app.close();
+  });
+
+  it("reports dependency readiness without confusing it with liveness", async () => {
+    const ready = buildApi({ readiness: () => true });
+    const unavailable = buildApi({ readiness: () => false });
+
+    expect((await ready.inject({ method: "GET", url: "/health/ready" })).json()).toEqual({
+      status: "ready",
+      service: "formforge-api",
+      checks: { dependencies: "ok" },
+    });
+    const failed = await unavailable.inject({ method: "GET", url: "/health/ready" });
+    expect(failed.statusCode).toBe(503);
+    expect(failed.json()).toMatchObject({ status: "not_ready", checks: { dependencies: "failed" } });
+    await Promise.all([ready.close(), unavailable.close()]);
+  });
+
+  it("emits request-correlated structured events without request payloads", async () => {
+    const events: OperationalEvent[] = [];
+    const app = buildApi({
+      events: (event) => events.push(event),
+      now: () => new Date("2026-07-13T09:00:00.000Z"),
+    });
+    await app.inject({ method: "GET", url: "/health", headers: { "x-request-id": "release-probe-001" } });
+
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({
+      timestamp: "2026-07-13T09:00:00.000Z",
+      level: "info",
+      event: "http.request.completed",
+      requestId: "release-probe-001",
+      method: "GET",
+      route: "/health",
+      statusCode: 200,
+    });
+    expect(serializeOperationalEvent(events[0]!)).not.toContain("payload");
     await app.close();
   });
 
