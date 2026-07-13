@@ -12,3 +12,5 @@ export const productCards: readonly ProductCard[] = [
   { area: "responses", title: "Responses", description: "Inspect, filter, and export submissions.", status: "planned" },
   { area: "analytics", title: "Analytics", description: "Understand completion and drop-off with honest metrics.", status: "planned" },
 ];
+
+export { demoForm, parseFormSchema, type Field, type FieldKind, type FormSchema } from "./schema.js";
