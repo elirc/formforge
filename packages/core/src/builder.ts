@@ -5,6 +5,7 @@ export type BuilderAction =
   | Readonly<{ type: "field.add"; field: Field }>
   | Readonly<{ type: "field.select"; fieldId: string }>
   | Readonly<{ type: "field.update"; fieldId: string; patch: Readonly<{ label?: string; description?: string }> }>
+  | Readonly<{ type: "field.move"; fieldId: string; targetIndex: number }>
   | Readonly<{ type: "field.duplicate"; fieldId: string; newId: string }>
   | Readonly<{ type: "field.remove"; fieldId: string }>;
 
@@ -28,6 +29,17 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
     case "field.add": return { ...state, schema: { ...state.schema, fields: [...state.schema.fields, action.field] }, selectedFieldId: action.field.id };
     case "field.select": return state.schema.fields.some((field) => field.id === action.fieldId) ? { ...state, selectedFieldId: action.fieldId } : state;
     case "field.update": return { ...state, schema: { ...state.schema, fields: state.schema.fields.map((field) => field.id === action.fieldId ? { ...field, ...action.patch } : field) } };
+    case "field.move": {
+      const sourceIndex = state.schema.fields.findIndex((field) => field.id === action.fieldId);
+      if (sourceIndex < 0) return state;
+      const targetIndex = Math.max(0, Math.min(action.targetIndex, state.schema.fields.length - 1));
+      if (targetIndex === sourceIndex) return state;
+      const fields = [...state.schema.fields];
+      const [field] = fields.splice(sourceIndex, 1);
+      if (!field) return state;
+      fields.splice(targetIndex, 0, field);
+      return { ...state, schema: { ...state.schema, fields } };
+    }
     case "field.duplicate": {
       const sourceIndex = state.schema.fields.findIndex((field) => field.id === action.fieldId);
       const source = state.schema.fields[sourceIndex];
