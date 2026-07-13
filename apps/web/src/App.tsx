@@ -1,9 +1,10 @@
-import { demoForm, demoVisibilityRules, demoWorkspace, productCards, workspaceQueryKey, type Workspace } from "@formforge/core";
+import { demoForm, demoFormFlow, demoVisibilityRules, demoWorkspace, productCards, workspaceQueryKey, type Workspace } from "@formforge/core";
 import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { createRootRoute, createRoute, createRouter, Link, Outlet, RouterProvider } from "@tanstack/react-router";
 import { useCallback, useRef, useState } from "react";
 import { FormBuilder } from "./FormBuilder.js";
 import { FormRenderer } from "./FormRenderer.js";
+import { MultiPageForm } from "./MultiPageForm.js";
 import { AutosaveStatus, useAutosave, type DraftSaver } from "./useAutosave.js";
 
 function HomePage() {
@@ -119,7 +120,7 @@ function WorkspaceBuilder({ workspaceId, initialSchema }: { workspaceId: string;
   }, [workspaceId]);
   const autosave = useAutosave(schema, save);
 
-  return <><div className="workspace-savebar"><span>Draft / {initialSchema.title}</span><AutosaveStatus state={autosave} /></div><FormBuilder initialSchema={initialSchema} onSchemaChange={setSchema} rules={demoVisibilityRules} /></>;
+  return <><div className="workspace-savebar"><span>Draft / {initialSchema.title}</span><AutosaveStatus state={autosave} /></div><FormBuilder initialSchema={initialSchema} onSchemaChange={setSchema} rules={demoVisibilityRules} /><div className="flow-demo"><div><p className="eyebrow">Respondent journey</p><h2>Branching, resumable form</h2></div><MultiPageForm schema={initialSchema} flow={demoFormFlow} storageKey={`formforge:demo:${workspaceId}`} /></div></>;
 }
 
 function WorkspacePage() {

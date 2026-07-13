@@ -18,3 +18,4 @@ export { builderReducer, createField, initialBuilderState, type BuilderAction, t
 export { validateResponse, validateSchema, type AnswerValue, type ResponseErrors, type SchemaIssue } from "./validation.js";
 export { demoWorkspace, workspaceQueryKey, type Workspace } from "./workspace.js";
 export { demoVisibilityRules, evaluateRule, isFieldVisible, validateVisibilityRules, type ComparisonRule, type ConditionRule, type RuleIssue, type VisibilityRule } from "./rules.js";
+export { answerSession, backSession, demoFormFlow, nextSession, resumeSession, serializeSession, startSession, type FormFlow, type FormPage, type PageBranch, type ResponseSession } from "./flow.js";
