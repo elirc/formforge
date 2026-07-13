@@ -1,4 +1,5 @@
 import { demoForm, productCards } from "@formforge/core";
+import { FormBuilder } from "./FormBuilder.js";
 import { FormRenderer } from "./FormRenderer.js";
 
 export function App() {
@@ -50,6 +51,14 @@ export function App() {
               </article>
             ))}
           </div>
+        </section>
+
+        <section className="builder-section" aria-labelledby="builder-heading">
+          <div className="section-heading">
+            <div><p className="eyebrow">Authoring studio</p><h2 id="builder-heading">Shape the form, see the result.</h2></div>
+            <p className="section-intro">Canonical reducer state drives the structure, settings, and preview without duplicated truth.</p>
+          </div>
+          <FormBuilder />
         </section>
 
         <section className="renderer-stage" aria-labelledby="renderer-heading">
