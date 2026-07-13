@@ -1,4 +1,4 @@
-import { builderReducer, createField, initialBuilderState, type FieldKind, type FormSchema } from "@formforge/core";
+import { builderReducer, createField, initialBuilderState, validateSchema, type FieldKind, type FormSchema } from "@formforge/core";
 import { useReducer, useRef, useState, type DragEvent } from "react";
 import { FormRenderer } from "./FormRenderer.js";
 
@@ -54,7 +54,9 @@ export function FormBuilder({ initialSchema, onSchemaChange }: { initialSchema?:
   const [state, dispatch] = useReducer(builderReducer, initialSchema ? { schema: initialSchema, selectedFieldId: initialSchema.fields[0]?.id } : initialBuilderState);
   const sequence = useRef(state.schema.fields.length);
   const [statusMessage, setStatusMessage] = useState("");
+  const [previewWidth, setPreviewWidth] = useState<"desktop" | "mobile">("desktop");
   const selected = state.schema.fields.find((field) => field.id === state.selectedFieldId);
+  const schemaIssues = validateSchema(state.schema);
 
   function send(action: Parameters<typeof builderReducer>[1]) {
     const next = builderReducer(state, action);
@@ -85,7 +87,8 @@ export function FormBuilder({ initialSchema, onSchemaChange }: { initialSchema?:
       </aside>
 
       <div className="builder-canvas">
-        <div className="canvas-heading"><div><p className="eyebrow">Structure</p><h2>{state.schema.fields.length} fields</h2></div><span>Draft</span></div>
+        <div className="canvas-heading"><div><p className="eyebrow">Structure</p><h2>{state.schema.fields.length} fields</h2></div><button className="publish-button" type="button" disabled={schemaIssues.length > 0} onClick={() => setStatusMessage("Draft is ready to publish")}>Publish</button></div>
+        {schemaIssues.length > 0 && <div className="schema-issues" role="status"><strong>{schemaIssues.length} publish check{schemaIssues.length === 1 ? "" : "s"}</strong><ul>{schemaIssues.map((issue) => <li key={`${issue.fieldId ?? "form"}-${issue.code}`}>{issue.message}</li>)}</ul></div>}
         <p className="sr-only" aria-live="polite">{statusMessage}</p>
         <ol className="field-list" aria-label="Form fields in order">
           {state.schema.fields.map((field, index) => (
@@ -102,6 +105,7 @@ export function FormBuilder({ initialSchema, onSchemaChange }: { initialSchema?:
           <input id="field-label" value={selected.label} onChange={(event) => send({ type: "field.update", fieldId: selected.id, patch: { label: event.currentTarget.value } })} />
           <label htmlFor="field-description">Description</label>
           <textarea id="field-description" value={selected.description} onChange={(event) => send({ type: "field.update", fieldId: selected.id, patch: { description: event.currentTarget.value } })} />
+          {selected.kind !== "content" && <label className="required-setting"><input type="checkbox" checked={selected.required} onChange={(event) => send({ type: "field.require", fieldId: selected.id, required: event.currentTarget.checked })} /> Required response</label>}
           <div className="settings-actions">
             <button type="button" onClick={() => send({ type: "field.duplicate", fieldId: selected.id, newId: nextId(selected.kind) })}>Duplicate</button>
             <button className="danger" type="button" onClick={() => send({ type: "field.remove", fieldId: selected.id })}>Delete</button>
@@ -109,7 +113,13 @@ export function FormBuilder({ initialSchema, onSchemaChange }: { initialSchema?:
         </>}
       </aside>
 
-      <div className="builder-preview"><FormRenderer schema={state.schema} /></div>
+      <div className="builder-preview">
+        <div className="preview-toolbar" aria-label="Preview width">
+          <strong>Respondent preview</strong>
+          <div><button type="button" aria-pressed={previewWidth === "desktop"} onClick={() => setPreviewWidth("desktop")}>Desktop</button><button type="button" aria-pressed={previewWidth === "mobile"} onClick={() => setPreviewWidth("mobile")}>Mobile</button></div>
+        </div>
+        <div className={`preview-viewport ${previewWidth}`}><FormRenderer schema={state.schema} /></div>
+      </div>
     </section>
   );
 }

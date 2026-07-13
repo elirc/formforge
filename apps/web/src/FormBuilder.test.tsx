@@ -31,4 +31,17 @@ describe("visual form builder", () => {
     expect(screen.getByText("Moved Work email to position 1")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Move Work email up" })).toBeDisabled();
   });
+
+  it("updates required state and switches the responsive preview", async () => {
+    const user = userEvent.setup();
+    render(<FormBuilder />);
+
+    const required = screen.getByRole("checkbox", { name: "Required response" });
+    expect(required).toBeChecked();
+    await user.click(required);
+    expect(required).not.toBeChecked();
+
+    await user.click(screen.getByRole("button", { name: "Mobile" }));
+    expect(screen.getByRole("button", { name: "Mobile" })).toHaveAttribute("aria-pressed", "true");
+  });
 });
