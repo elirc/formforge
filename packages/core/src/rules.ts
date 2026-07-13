@@ -19,7 +19,7 @@ export type VisibilityRule = Readonly<{
 
 export type RuleIssue = Readonly<{
   targetFieldId: string;
-  code: "target.missing" | "dependency.missing" | "dependency.self" | "target.duplicate";
+  code: "target.missing" | "dependency.missing" | "dependency.self" | "dependency.cycle" | "target.duplicate";
   message: string;
 }>;
 
@@ -52,6 +52,28 @@ export function validateVisibilityRules(schema: FormSchema, rules: readonly Visi
       if (dependency === rule.targetFieldId) issues.push({ targetFieldId: rule.targetFieldId, code: "dependency.self", message: "A field cannot control its own visibility." });
     }
   }
+  const controlledFields = new Set(rules.map((rule) => rule.targetFieldId));
+  const graph = new Map(rules.map((rule) => [rule.targetFieldId, [...new Set(dependencies(rule.when))].filter((dependency) => dependency !== rule.targetFieldId && controlledFields.has(dependency))]));
+  const visiting = new Set<string>();
+  const visited = new Set<string>();
+  const path: string[] = [];
+  const cyclic = new Set<string>();
+  function visit(fieldId: string) {
+    if (visiting.has(fieldId)) {
+      const cycleStart = path.indexOf(fieldId);
+      for (const cycleField of path.slice(cycleStart)) cyclic.add(cycleField);
+      return;
+    }
+    if (visited.has(fieldId)) return;
+    visiting.add(fieldId);
+    path.push(fieldId);
+    for (const dependency of graph.get(fieldId) ?? []) visit(dependency);
+    path.pop();
+    visiting.delete(fieldId);
+    visited.add(fieldId);
+  }
+  for (const fieldId of graph.keys()) visit(fieldId);
+  for (const targetFieldId of cyclic) issues.push({ targetFieldId, code: "dependency.cycle", message: "Conditional fields cannot depend on one another in a cycle." });
   return issues;
 }
 
