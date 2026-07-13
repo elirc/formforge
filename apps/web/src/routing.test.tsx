@@ -8,7 +8,8 @@ describe("typed workspace routes", () => {
     render(<App />);
 
     expect(await screen.findByRole("heading", { name: "responses", level: 1 })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "No responses yet" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "18 responses" })).toBeInTheDocument();
+    expect(screen.getByRole("table", { name: "Published form responses" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Responses" })).toHaveAttribute("aria-current", "page");
   });
 });
