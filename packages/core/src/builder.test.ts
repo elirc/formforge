@@ -24,4 +24,16 @@ describe("builder reducer", () => {
     expect(next.schema.fields.some((field) => field.id === selected)).toBe(false);
     expect(next.selectedFieldId).toBe(next.schema.fields[0]?.id);
   });
+
+  it("reorders without changing field identity or selection", () => {
+    const beforeIds = initialBuilderState.schema.fields.map((field) => field.id);
+    const moving = beforeIds[2];
+    if (!moving) throw new Error("fixture requires three fields");
+
+    const next = builderReducer(initialBuilderState, { type: "field.move", fieldId: moving, targetIndex: 0 });
+
+    expect(next.schema.fields[0]?.id).toBe(moving);
+    expect([...next.schema.fields.map((field) => field.id)].sort()).toEqual([...beforeIds].sort());
+    expect(next.selectedFieldId).toBe(initialBuilderState.selectedFieldId);
+  });
 });

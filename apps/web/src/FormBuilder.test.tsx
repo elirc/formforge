@@ -19,4 +19,16 @@ describe("visual form builder", () => {
     await user.click(screen.getByRole("button", { name: "Delete" }));
     expect(screen.queryByDisplayValue("Contact email copy")).not.toBeInTheDocument();
   });
+
+  it("offers a complete keyboard ordering path and announces the result", async () => {
+    const user = userEvent.setup();
+    render(<FormBuilder />);
+
+    await user.click(screen.getByRole("button", { name: "Move Work email up" }));
+
+    const orderedFields = screen.getAllByRole("listitem");
+    expect(orderedFields[0]).toHaveTextContent("Work email");
+    expect(screen.getByText("Moved Work email to position 1")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Move Work email up" })).toBeDisabled();
+  });
 });
