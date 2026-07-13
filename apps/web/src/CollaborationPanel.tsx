@@ -26,6 +26,8 @@ export function CommentsPanel({ initialComments = demoComments, createComment = 
       const saved = await createComment(text);
       setComments((current) => current.map((comment) => comment.id === temporaryId ? saved : comment));
     } catch {
+      setComments((current) => current.filter((comment) => comment.id !== temporaryId));
+      setBody(text);
       setError("Comment failed to send. Try again.");
     }
   }
