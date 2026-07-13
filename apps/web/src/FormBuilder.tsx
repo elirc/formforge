@@ -1,4 +1,4 @@
-import { builderReducer, createField, initialBuilderState, validateSchema, type FieldKind, type FormSchema } from "@formforge/core";
+import { builderReducer, createField, initialBuilderState, validateSchema, type FieldKind, type FormSchema, type VisibilityRule } from "@formforge/core";
 import { useReducer, useRef, useState, type DragEvent } from "react";
 import { FormRenderer } from "./FormRenderer.js";
 
@@ -50,7 +50,7 @@ function FieldRow({ field, index, total, selected, onSelect, onMove, onDrop }: {
   );
 }
 
-export function FormBuilder({ initialSchema, onSchemaChange }: { initialSchema?: FormSchema; onSchemaChange?: (schema: FormSchema) => void }) {
+export function FormBuilder({ initialSchema, onSchemaChange, rules = [] }: { initialSchema?: FormSchema; onSchemaChange?: (schema: FormSchema) => void; rules?: readonly VisibilityRule[] }) {
   const [state, dispatch] = useReducer(builderReducer, initialSchema ? { schema: initialSchema, selectedFieldId: initialSchema.fields[0]?.id } : initialBuilderState);
   const sequence = useRef(state.schema.fields.length);
   const [statusMessage, setStatusMessage] = useState("");
@@ -115,10 +115,10 @@ export function FormBuilder({ initialSchema, onSchemaChange }: { initialSchema?:
 
       <div className="builder-preview">
         <div className="preview-toolbar" aria-label="Preview width">
-          <strong>Respondent preview</strong>
+          <strong>Respondent preview</strong>{rules.length > 0 && <span className="logic-badge">{rules.length} visibility rule{rules.length === 1 ? "" : "s"}</span>}
           <div><button type="button" aria-pressed={previewWidth === "desktop"} onClick={() => setPreviewWidth("desktop")}>Desktop</button><button type="button" aria-pressed={previewWidth === "mobile"} onClick={() => setPreviewWidth("mobile")}>Mobile</button></div>
         </div>
-        <div className={`preview-viewport ${previewWidth}`}><FormRenderer schema={state.schema} /></div>
+        <div className={`preview-viewport ${previewWidth}`}><FormRenderer schema={state.schema} rules={rules} /></div>
       </div>
     </section>
   );
