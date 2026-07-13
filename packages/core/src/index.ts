@@ -17,3 +17,4 @@ export { demoForm, parseFormSchema, type Field, type FieldKind, type FormSchema 
 export { builderReducer, createField, initialBuilderState, type BuilderAction, type BuilderState } from "./builder.js";
 export { validateResponse, validateSchema, type AnswerValue, type ResponseErrors, type SchemaIssue } from "./validation.js";
 export { demoWorkspace, workspaceQueryKey, type Workspace } from "./workspace.js";
+export { demoVisibilityRules, evaluateRule, isFieldVisible, validateVisibilityRules, type ComparisonRule, type ConditionRule, type RuleIssue, type VisibilityRule } from "./rules.js";
