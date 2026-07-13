@@ -36,4 +36,11 @@ describe("builder reducer", () => {
     expect([...next.schema.fields.map((field) => field.id)].sort()).toEqual([...beforeIds].sort());
     expect(next.selectedFieldId).toBe(initialBuilderState.selectedFieldId);
   });
+
+  it("changes required state only for response fields", () => {
+    const optional = initialBuilderState.schema.fields.find((field) => field.kind === "choice");
+    if (!optional) throw new Error("fixture requires a choice field");
+    const next = builderReducer(initialBuilderState, { type: "field.require", fieldId: optional.id, required: true });
+    expect(next.schema.fields.find((field) => field.id === optional.id)?.required).toBe(true);
+  });
 });
