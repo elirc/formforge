@@ -1,13 +1,18 @@
 import { demoForm, demoFormFlow, demoJourneys, demoResponses, demoVisibilityRules, demoWorkspace, productCards, workspaceQueryKey, type Workspace } from "@formforge/core";
 import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { createRootRoute, createRoute, createRouter, Link, Outlet, RouterProvider } from "@tanstack/react-router";
-import { useCallback, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useRef, useState } from "react";
 import { FormBuilder } from "./FormBuilder.js";
 import { FormRenderer } from "./FormRenderer.js";
 import { MultiPageForm } from "./MultiPageForm.js";
 import { ResponseExplorer } from "./ResponseExplorer.js";
-import { AnalyticsDashboard } from "./AnalyticsDashboard.js";
 import { CollaborationPanel } from "./CollaborationPanel.js";
+import { ErrorBoundary, NetworkStatus } from "./Resilience.js";
+
+const AnalyticsDashboard = lazy(async () => {
+  const module = await import("./AnalyticsDashboard.js");
+  return { default: module.AnalyticsDashboard };
+});
 import { AutosaveStatus, useAutosave, type DraftSaver } from "./useAutosave.js";
 
 function HomePage() {
@@ -150,7 +155,7 @@ function WorkspacePage() {
         <div className="route-heading"><div><p className="eyebrow">Workspace / {workspace.data.name}</p><h1>{view === "builder" ? workspace.data.forms[0]?.title ?? "New form" : view}</h1></div><Link to="/">Back to overview</Link></div>
         {view === "builder" && workspace.data.forms[0] && <WorkspaceBuilder workspaceId={workspaceId} initialSchema={workspace.data.forms[0]} />}
         {view === "responses" && <ResponseExplorer responses={demoResponses} />}
-        {view === "analytics" && <AnalyticsDashboard journeys={demoJourneys} responses={demoResponses} pages={demoFormFlow.pages} />}
+        {view === "analytics" && <Suspense fallback={<section className="route-boundary" aria-busy="true"><h2>Loading analytics…</h2></section>}><AnalyticsDashboard journeys={demoJourneys} responses={demoResponses} pages={demoFormFlow.pages} /></Suspense>}
       </main>
     </div>
   );
@@ -177,5 +182,5 @@ declare module "@tanstack/react-router" {
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: 30_000 } } });
 
 export function App() {
-  return <QueryClientProvider client={queryClient}><RouterProvider router={appRouter} /></QueryClientProvider>;
+  return <ErrorBoundary><NetworkStatus /><QueryClientProvider client={queryClient}><RouterProvider router={appRouter} /></QueryClientProvider></ErrorBoundary>;
 }

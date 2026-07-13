@@ -39,4 +39,13 @@ describe("conditional visibility rules", () => {
     ]);
     expect(issues.map((issue) => issue.code)).toEqual(["dependency.self", "target.duplicate", "dependency.missing", "target.missing"]);
   });
+
+  it("rejects a dependency cycle spanning multiple fields", () => {
+    const issues = validateVisibilityRules(demoForm, [
+      { targetFieldId: "name", when: { kind: "equals", fieldId: "email", value: "a@example.com" } },
+      { targetFieldId: "email", when: { kind: "equals", fieldId: "role", value: "engineering" } },
+      { targetFieldId: "role", when: { kind: "equals", fieldId: "name", value: "Ada" } },
+    ]);
+    expect(issues.map((issue) => String(issue.code))).toContain("dependency.cycle");
+  });
 });

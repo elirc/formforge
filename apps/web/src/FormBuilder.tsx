@@ -24,6 +24,12 @@ function FieldRow({ field, index, total, selected, onSelect, onMove, onDrop }: {
   onDrop: (sourceId: string, targetIndex: number) => void;
 }) {
   const [detailsOpen, setDetailsOpen] = useState(false);
+  function restoreFieldFocus(fieldId: string) {
+    window.setTimeout(() => {
+      const target = [...document.querySelectorAll<HTMLButtonElement>("[data-field-select]")].find((button) => button.dataset.fieldSelect === fieldId);
+      target?.focus();
+    });
+  }
   function beginDrag(event: DragEvent<HTMLLIElement>) {
     event.dataTransfer.effectAllowed = "move";
     event.dataTransfer.setData("text/formforge-field", field.id);
@@ -31,17 +37,24 @@ function FieldRow({ field, index, total, selected, onSelect, onMove, onDrop }: {
   function receiveDrop(event: DragEvent<HTMLLIElement>) {
     event.preventDefault();
     const sourceId = event.dataTransfer.getData("text/formforge-field");
-    if (sourceId) onDrop(sourceId, index);
+    if (sourceId) {
+      onDrop(sourceId, index);
+      restoreFieldFocus(sourceId);
+    }
+  }
+  function moveWithFocus(targetIndex: number) {
+    onMove(targetIndex);
+    restoreFieldFocus(field.id);
   }
 
   return (
     <li className={selected ? "selected" : ""} draggable onDragStart={beginDrag} onDragOver={(event) => event.preventDefault()} onDrop={receiveDrop}>
       <div className="field-row-main">
         <span className="drag-grip" title="Drag to reorder" aria-hidden="true">⠿</span>
-        <button className="field-select" type="button" onClick={onSelect}><span>{String(index + 1).padStart(2, "0")}</span><strong>{field.label}</strong><small>{field.kind}</small></button>
+        <button aria-label={`Edit ${field.label}`} className="field-select" data-field-select={field.id} type="button" onClick={onSelect}><span>{String(index + 1).padStart(2, "0")}</span><strong>{field.label}</strong><small>{field.kind}</small></button>
         <div className="move-actions" aria-label={`Reorder ${field.label}`}>
-          <button type="button" aria-label={`Move ${field.label} up`} disabled={index === 0} onClick={() => onMove(index - 1)}>↑</button>
-          <button type="button" aria-label={`Move ${field.label} down`} disabled={index === total - 1} onClick={() => onMove(index + 1)}>↓</button>
+          <button type="button" aria-label={`Move ${field.label} up`} disabled={index === 0} onClick={() => moveWithFocus(index - 1)}>↑</button>
+          <button type="button" aria-label={`Move ${field.label} down`} disabled={index === total - 1} onClick={() => moveWithFocus(index + 1)}>↓</button>
         </div>
       </div>
       <button className="details-toggle" type="button" aria-expanded={detailsOpen} onClick={() => setDetailsOpen((open) => !open)}>{detailsOpen ? "Hide" : "Show"} details for {field.label}</button>
@@ -92,7 +105,7 @@ export function FormBuilder({ initialSchema, onSchemaChange, rules = [] }: { ini
         <p className="sr-only" aria-live="polite">{statusMessage}</p>
         <ol className="field-list" aria-label="Form fields in order">
           {state.schema.fields.map((field, index) => (
-            <FieldRow key={index} field={field} index={index} total={state.schema.fields.length} selected={field.id === state.selectedFieldId} onSelect={() => send({ type: "field.select", fieldId: field.id })} onMove={(targetIndex) => move(field.id, targetIndex)} onDrop={move} />
+            <FieldRow key={field.id} field={field} index={index} total={state.schema.fields.length} selected={field.id === state.selectedFieldId} onSelect={() => send({ type: "field.select", fieldId: field.id })} onMove={(targetIndex) => move(field.id, targetIndex)} onDrop={move} />
           ))}
         </ol>
       </div>
