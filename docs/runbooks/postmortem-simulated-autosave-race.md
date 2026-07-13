@@ -1,7 +1,9 @@
 # Simulated incident postmortem: stale autosave overwrote status
 
-**Date:** 2026-07-13  
-**Severity:** SEV-2 simulation  
+**Date:** 2026-07-13
+
+**Severity:** SEV-2 simulation
+
 **User impact:** an author could see an older save finish after a newer edit and receive misleading saved-version state.
 
 ## Timeline
