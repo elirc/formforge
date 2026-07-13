@@ -11,11 +11,15 @@ export type AutosaveState =
   | { readonly status: "queued" }
   | { readonly status: "saving" }
   | { readonly status: "saved"; readonly version: number }
-  | { readonly status: "conflict"; readonly serverVersion: number };
+  | { readonly status: "conflict"; readonly serverVersion: number }
+  | { readonly status: "error" };
 
 export function useAutosave(schema: FormSchema, save: DraftSaver, delay = 500): AutosaveState {
   const [state, setState] = useState<AutosaveState>({ status: "idle" });
-  const [version, setVersion] = useState(0);
+  const version = useRef(0);
+  const queue = useRef<Promise<void>>(Promise.resolve());
+  const requestSequence = useRef(0);
+  const latestRequest = useRef(0);
   const mounted = useRef(false);
 
   useEffect(() => {
@@ -26,14 +30,17 @@ export function useAutosave(schema: FormSchema, save: DraftSaver, delay = 500): 
 
     setState({ status: "queued" });
     const timer = window.setTimeout(() => {
+      requestSequence.current += 1;
+      const requestId = requestSequence.current;
+      latestRequest.current = requestId;
       setState({ status: "saving" });
-      void save(schema, version).then((result) => {
-        if (result.status === "saved") {
-          setVersion(result.version);
-          setState({ status: "saved", version: result.version });
-        } else {
-          setState({ status: "conflict", serverVersion: result.serverVersion });
-        }
+      queue.current = queue.current.then(async () => {
+        const result = await save(schema, version.current);
+        if (result.status === "saved") version.current = result.version;
+        if (requestId !== latestRequest.current) return;
+        setState(result.status === "saved" ? { status: "saved", version: result.version } : { status: "conflict", serverVersion: result.serverVersion });
+      }).catch(() => {
+        if (requestId === latestRequest.current) setState({ status: "error" });
       });
     }, delay);
 
@@ -48,6 +55,7 @@ export function AutosaveStatus({ state }: { state: AutosaveState }) {
     : state.status === "queued" ? "Changes queued"
       : state.status === "saving" ? "Saving draft…"
         : state.status === "saved" ? `Saved version ${state.version}`
-          : `Save conflict with server version ${state.serverVersion}`;
+          : state.status === "conflict" ? `Save conflict with server version ${state.serverVersion}`
+            : "Draft could not be saved";
   return <div className={`autosave-status ${state.status}`} role="status"><span aria-hidden="true" />{message}</div>;
 }
