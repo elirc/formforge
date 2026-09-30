@@ -28,11 +28,12 @@ export function useAutosave(schema: FormSchema, save: DraftSaver, delay = 500): 
       return;
     }
 
+    // A local edit supersedes old status messages before its debounce expires.
+    requestSequence.current += 1;
+    const requestId = requestSequence.current;
+    latestRequest.current = requestId;
     setState({ status: "queued" });
     const timer = window.setTimeout(() => {
-      requestSequence.current += 1;
-      const requestId = requestSequence.current;
-      latestRequest.current = requestId;
       setState({ status: "saving" });
       queue.current = queue.current.then(async () => {
         const result = await save(schema, version.current);

@@ -1,6 +1,10 @@
 # FormForge
 
-FormForge is a complete, schema-driven form builder and response analytics platform built as a fifteen-sprint React and TypeScript teaching repository. A junior engineer studies the issues, ordered commits, pull-request reviews, architecture decisions, counterexamples, and tests that produced the product.
+Start the detailed mid-level CRUD course in [astraupskill/README.md](astraupskill/README.md): source maps, a worked publication/autosave repair, failure tests, exercises, solutions and an executable API trace lab.
+
+FormForge is a schema-driven form builder and response analytics teaching workspace organized around fifteen React and TypeScript sprints. A junior engineer studies the issues, ordered commits, pull-request reviews, architecture decisions, counterexamples, and tests that produced the code.
+
+The browser currently uses fixture workspace/public-form data and a local autosave callback. The Fastify API is separately implemented and tested; the browser is not yet a persisted end-to-end API client. The detailed course makes this boundary explicit and includes a guided integration capstone.
 
 Version `1.0.0` includes typed authoring, seven field variants, validation, conditional logic, multi-page branching and resume, immutable publishing, retry-safe submissions, response filtering and CSV export, analytics, comments, version diffs, accessibility checks, autosave recovery, and operational readiness boundaries.
 
@@ -25,14 +29,14 @@ pnpm gate
 ```mermaid
 flowchart LR
   Browser[React 19 + Vite] --> Core[@formforge/core\ntyped domain rules]
-  Browser --> API[Fastify API\nruntime boundaries]
+  Browser -. Integration exercise .-> API[Fastify API\nruntime boundaries]
   API --> Core
   API --> Data[@formforge/data\nrepository contracts + in-memory adapters]
   Data --> Core
   CI[GitHub Actions] --> Checks[lint + typecheck + tests + build\nsecret scan + bundle budget]
 ```
 
-The browser owns interaction and presentation state. `@formforge/core` owns pure schemas, reducers, validation, branching, response queries, analytics, and diffs. The API validates untrusted HTTP data and authorization context. `@formforge/data` demonstrates versioned repository contracts with deterministic in-memory adapters; durable deployment storage remains an explicit production integration, not a claim made by this repository.
+The browser owns interaction and presentation state. `@formforge/core` owns pure schemas, reducers, validation, branching, response queries, analytics, and diffs. The API validates untrusted HTTP data. Its publishing workspace header is demonstration input, not authenticated identity; draft routes do not have production authorization. `@formforge/data` demonstrates versioned repository contracts with in-memory adapters; durable deployment storage remains an explicit production integration, not a claim made by this repository.
 
 ## Implemented stack
 

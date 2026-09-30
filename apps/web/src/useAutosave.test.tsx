@@ -25,6 +25,22 @@ function deferred<T>() {
 describe("debounced autosave", () => {
   afterEach(() => vi.useRealTimers());
 
+  it("keeps a newer edit queued when an earlier save finishes during its debounce", async () => {
+    vi.useFakeTimers();
+    const first = deferred<DraftSaveResult>();
+    const save = vi.fn<DraftSaver>().mockImplementationOnce(() => first.promise).mockResolvedValueOnce({ status: "saved", version: 2 });
+    render(<RaceHarness save={save} />);
+    await act(async () => screen.getByRole("button", { name: "Edit one" }).click());
+    await act(async () => vi.advanceTimersByTime(300));
+    await act(async () => screen.getByRole("button", { name: "Edit two" }).click());
+    await act(async () => vi.advanceTimersByTime(100));
+    await act(async () => first.resolve({ status: "saved", version: 1 }));
+    expect(screen.getByRole("status")).toHaveTextContent("Changes queued");
+    await act(async () => vi.advanceTimersByTime(200));
+    expect(save.mock.calls[1]).toEqual([expect.objectContaining({ title: "Edit two" }), 1]);
+    expect(screen.getByRole("status")).toHaveTextContent("Saved version 2");
+  });
+
   it("waits for an editing pause and communicates the saved version", async () => {
     vi.useFakeTimers();
     const save = vi.fn<DraftSaver>().mockResolvedValue({ status: "saved", version: 1 });
@@ -68,5 +84,22 @@ describe("debounced autosave", () => {
     expect(save.mock.calls[1]?.[1]).toBe(1);
     await act(async () => second.resolve({ status: "saved", version: 2 }));
     expect(screen.getByRole("status")).toHaveTextContent("Saved version 2");
+  });
+  it("ignores a conflict from a superseded save and lets the queued edit surface it with the committed version", async () => {
+    vi.useFakeTimers();
+    const first = deferred<DraftSaveResult>();
+    const save = vi.fn<DraftSaver>().mockImplementationOnce(() => first.promise).mockResolvedValueOnce({ status: "conflict", serverVersion: 3 });
+    render(<RaceHarness save={save} />);
+    await act(async () => screen.getByRole("button", { name: "Edit one" }).click());
+    await act(async () => vi.advanceTimersByTime(300));           // first save in flight
+    await act(async () => screen.getByRole("button", { name: "Edit two" }).click());
+    await act(async () => vi.advanceTimersByTime(100));           // newer edit queued
+    await act(async () => first.resolve({ status: "conflict", serverVersion: 3 }));
+    // The superseded save's conflict is not shown: the newer edit is what the user cares about.
+    expect(screen.getByRole("status")).toHaveTextContent("Changes queued");
+    await act(async () => vi.advanceTimersByTime(200));
+    // The queued save is sent with the still-committed version 0 (a conflict does not advance it) and surfaces the conflict itself.
+    expect(save.mock.calls[1]).toEqual([expect.objectContaining({ title: "Edit two" }), 0]);
+    expect(screen.getByRole("status")).toHaveTextContent("Save conflict with server version 3");
   });
 });

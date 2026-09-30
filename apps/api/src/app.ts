@@ -1,5 +1,5 @@
 import { parseFormSchema, validateResponse, validateSchema, type AnswerValue, type FormSchema } from "@formforge/core";
-import { InMemoryDraftRepository, InMemoryPublicationRepository, InMemorySubmissionRepository, type DraftRepository, type PublicationRepository, type SubmissionRepository } from "@formforge/data";
+import { InMemoryDraftRepository, InMemoryPublicationRepository, InMemorySubmissionRepository, PublicationSlugConflictError, type DraftRepository, type PublicationRepository, type SubmissionRepository } from "@formforge/data";
 import Fastify from "fastify";
 import { randomUUID } from "node:crypto";
 import type { OperationalEventSink } from "./operational-events.js";
@@ -72,6 +72,7 @@ export function buildApi(options: ApiOptions = {}) {
     } catch {
       return reply.code(400).send({ code: "invalid_draft" });
     }
+    if (schema.id !== request.params.formId) return reply.code(400).send({ code: "form_identity_mismatch" });
     const result = await drafts.save({
       workspaceId: request.params.workspaceId,
       formId: request.params.formId,
@@ -90,9 +91,15 @@ export function buildApi(options: ApiOptions = {}) {
       return reply.code(400).send({ code: "invalid_schema" });
     }
     const issues = validateSchema(schema);
+    if (schema.id !== request.params.formId) return reply.code(400).send({ code: "form_identity_mismatch" });
     if (issues.length > 0) return reply.code(422).send({ code: "schema_not_publishable", issues });
-    const publication = await publications.publish({ workspaceId: request.params.workspaceId, formId: request.params.formId, slug: request.body.slug, schema });
-    return reply.code(201).send(publication);
+    try {
+      const publication = await publications.publish({ workspaceId: request.params.workspaceId, formId: request.params.formId, slug: request.body.slug, schema });
+      return reply.code(201).send(publication);
+    } catch (error) {
+      if (error instanceof PublicationSlugConflictError) return reply.code(409).send({ code: "slug_unavailable" });
+      throw error;
+    }
   });
   app.get<{ Params: { slug: string } }>("/public/forms/:slug", async (request, reply) => {
     const publication = await publications.findBySlug(request.params.slug);
