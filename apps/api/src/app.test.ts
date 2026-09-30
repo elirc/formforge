@@ -4,6 +4,30 @@ import { buildApi } from "./app.js";
 import { serializeOperationalEvent, type OperationalEvent } from "./operational-events.js";
 
 describe("API health", () => {
+  it("rejects a schema identity different from the route without storing it", async () => {
+    const app = buildApi();
+    const base = "/workspaces/acme/forms/route-form";
+    const draft = await app.inject({ method: "PUT", url: `${base}/draft`, payload: { expectedVersion: 0, schema: demoForm } });
+    const publication = await app.inject({ method: "POST", url: `${base}/publish`, headers: { "x-workspace-id": "acme" }, payload: { slug: "mismatch-form", schema: demoForm } });
+    expect(draft.statusCode).toBe(400);
+    expect(publication.statusCode).toBe(400);
+    expect(draft.json()).toEqual({ code: "form_identity_mismatch" });
+    expect((await app.inject({ method: "GET", url: `${base}/draft` })).statusCode).toBe(404);
+    expect((await app.inject({ method: "GET", url: "/public/forms/mismatch-form" })).statusCode).toBe(404);
+    await app.close();
+  });
+
+  it("reports a slug conflict without replacing the owner's published form", async () => {
+    const app = buildApi();
+    const payload = { slug: "owned-research", schema: demoForm };
+    await app.inject({ method: "POST", url: `/workspaces/acme/forms/${demoForm.id}/publish`, headers: { "x-workspace-id": "acme" }, payload });
+    const conflict = await app.inject({ method: "POST", url: `/workspaces/other/forms/${demoForm.id}/publish`, headers: { "x-workspace-id": "other" }, payload });
+    expect(conflict.statusCode).toBe(409);
+    expect(conflict.json()).toEqual({ code: "slug_unavailable" });
+    expect((await app.inject({ method: "GET", url: "/public/forms/owned-research" })).json()).toMatchObject({ workspaceId: "acme", version: 1 });
+    await app.close();
+  });
+
   it("exposes a deterministic readiness boundary", async () => {
     const app = buildApi();
     const response = await app.inject({ method: "GET", url: "/health" });
