@@ -52,6 +52,6 @@ Testing has its own junior-focused guides: [why tests were added](TESTREADME.md)
 
 ## Release boundaries
 
-The v1 release demonstrates product behavior, strict compilation, deterministic test and seed evidence, accessibility automation, responsive browser journeys, bundle budgets, repository contracts, and operational documentation. Encryption, durable backups, retention enforcement, authentication, rate limiting, alert routing, and service-level objectives require a chosen deployment environment and are tracked honestly in the [threat model](docs/security/threat-model.md) and [runbooks](docs/runbooks/deploy.md).
+The v1 release demonstrates product behavior, strict compilation, deterministic test and seed evidence, jsdom accessibility automation, bundle budgets, repository contracts, and operational documentation. Encryption, durable backups, retention enforcement, authentication, rate limiting, alert routing, and service-level objectives require a chosen deployment environment and are tracked honestly in the [threat model](docs/security/threat-model.md) and [runbooks](docs/runbooks/deploy.md).
 
 Payments, arbitrary code execution, outbound automation, and live multi-user cursors are out of scope.

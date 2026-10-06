@@ -166,6 +166,30 @@ Each incident must be harvested with a failing test or audit, a minimal fix, and
 
 **Decision:** separate demonstrated readiness from claims that require a real production environment.
 
+## As shipped: where v1.0.0 differs from this plan
+
+*Checked against `main` @ `c1b2a71` on 2026-10-06.* This plan was written before the sprints ran; read it
+alongside what actually merged (PRs #5–#75, 60 stakeholder issues) so the plan's promises aren't mistaken for
+repository features.
+
+- **Planted incident #5 changed.** Sprint 04 shipped pointer *and* keyboard reordering together (PR #20:
+  "add pointer and keyboard ordering"; native HTML drag events in `apps/web/src/FormBuilder.tsx` plus visible
+  move controls), so there was never a drag-only flaw. The fifth harvested flaw is instead **reorder lost
+  keyboard focus**, and the first is **row state followed array position**. The authoritative list is
+  `docs/sprints/flaw-ledger.md`; the red/green pairs are the first ten commits of PR #70.
+- **No end-to-end browser tests.** The Sprint 09 "history-navigation E2E test" and Sprint 14 "Playwright
+  critical path" were not built — there is no Playwright dependency or E2E directory. Back-navigation is
+  covered by `packages/core/src/flow.test.ts` ("moves back through actual history…") and the jsdom component
+  test `apps/web/src/MultiPageForm.test.tsx`. The Sprint 15 release audit records the skipped browser sweep as
+  an evidence exception (`docs/audits/sprint-15-release.md`).
+- **Virtualization and worker boundaries were not implemented.** Sprint 11's explorer pages with a cursor
+  (`queryResponses` in `packages/core/src/responses.ts`) rather than virtualizing; Sprint 12 has no Web Worker.
+  The Sprint 14 performance evidence is a raw bundle budget (`scripts/check-bundle.mjs`: 450 KiB JS / 30 KiB
+  CSS) and a lazily loaded analytics route (`lazy(...)` in `apps/web/src/App.tsx`), not React Profiler output.
+- **Test evidence at release:** 77 Vitest cases — 34 core, 9 data, 27 web, 7 API (see `TESTING.md` for how to
+  recount). CI (`.github/workflows/ci.yml`) runs `pnpm audit --audit-level=high`, `pnpm gate`, and a gitleaks
+  secret scan.
+
 ## Review standard across all sprints
 
 Review should ask four questions repeatedly:

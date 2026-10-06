@@ -8,7 +8,20 @@ Tests in FormForge are executable claims about product behavior. Choose them fro
 - **Component tests** exercise what a user can see, click, type, and navigate with accessible queries.
 - **API tests** inject requests at the transport boundary and assert validation, permissions, and idempotency.
 - **Property tests** generate schema, rule, ordering, and CSV inputs to check invariants broadly.
-- **End-to-end and accessibility checks** cover a few critical browser journeys and interaction contracts.
+- **Accessibility checks** run `axe-core` against rendered compositions in jsdom (`apps/web/src/accessibility.test.tsx`), with colour contrast excluded because jsdom has no layout engine. There are **no end-to-end browser tests** yet: the Sprint 15 browser sweep is recorded as an evidence exception in `docs/audits/sprint-15-release.md`, and "browser automation for publish → respond → analyze" is listed as a next exercise in `docs/COURSE-RETROSPECTIVE.md`.
+
+## What exists today
+
+77 Vitest cases at v1.0.0 (static count, 2026-10-06):
+
+| Package | Cases | Files |
+| --- | --- | --- |
+| `packages/core` | 34 | 9 (`validation.test.ts` has one `it.each` with 4 rows) |
+| `packages/data` | 9 | 4 |
+| `apps/web` | 27 | 12 |
+| `apps/api` | 7 | 1 (`app.test.ts`, via Fastify `inject`) |
+
+Property tests use `fast-check` (4 `fc.assert` calls in core: schema round trip, rule equality, CSV quoting, completion-rate bounds). To recount, list `it(` lines in `*.test.ts*` files and expand each `it.each` table by its row count.
 
 ## Workflow
 
